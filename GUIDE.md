@@ -1,6 +1,6 @@
 # DataVault - Step-by-Step Development Guide
 
-This development guide breaks down the construction of **DataVault** into 6 distinct, logical phases. By committing incrementally at each phase, you build a consistent GitHub contribution graph ("Green Squares") and showcase clear progression to recruiters.
+This development guide breaks down the construction of **DataVault** into 6 distinct, logical phases, explaining the step-by-step modular development of the application.
 
 ---
 
