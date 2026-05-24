@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -120,36 +122,8 @@
                             <h2>Security Audit</h2>
                             <i class="fa-solid fa-circle-exclamation text-muted"></i>
                         </div>
-                        <div class="security-chart-container">
-                            <div class="security-bars">
-                                <div class="strength-metric">
-                                    <div class="metric-label">
-                                        <span>Strong Secrets</span>
-                                        <span id="strength-strong-pct">0%</span>
-                                    </div>
-                                    <div class="progress-bar-bg">
-                                        <div class="progress-bar-fill strong" id="strength-strong-bar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <div class="strength-metric">
-                                    <div class="metric-label">
-                                        <span>Medium Secrets</span>
-                                        <span id="strength-medium-pct">0%</span>
-                                    </div>
-                                    <div class="progress-bar-bg">
-                                        <div class="progress-bar-fill medium" id="strength-medium-bar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <div class="strength-metric">
-                                    <div class="metric-label">
-                                        <span>Weak Secrets</span>
-                                        <span id="strength-weak-pct">0%</span>
-                                    </div>
-                                    <div class="progress-bar-bg">
-                                        <div class="progress-bar-fill weak" id="strength-weak-bar" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="security-chart-container" style="position: relative; height: 165px; margin-top: 10px;">
+                            <canvas id="chart-security-strength"></canvas>
                         </div>
                         <div class="security-footer">
                             <p class="text-sm"><i class="fa-solid fa-circle-info"></i> Strengths are evaluated dynamically on the server based on length and entropy checks.</p>
@@ -160,11 +134,10 @@
                     <div class="glass-card category-breakdown-card">
                         <div class="card-header">
                             <h2>Database Distribution</h2>
-                            <i class="fa-solid fa-chart-simple text-muted"></i>
+                            <i class="fa-solid fa-chart-pie text-muted"></i>
                         </div>
-                        <div class="category-list" id="dashboard-category-list">
-                            <!-- Populated Dynamically -->
-                            <div class="empty-state">No category distribution data.</div>
+                        <div class="category-chart-container" style="position: relative; height: 165px; display: flex; justify-content: center; margin-top: 10px;">
+                            <canvas id="chart-categories-distribution"></canvas>
                         </div>
                     </div>
                 </div>

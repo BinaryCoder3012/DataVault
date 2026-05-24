@@ -18,6 +18,9 @@ const state = {
     tags: []
 };
 
+let securityChart = null;
+let categoriesChart = null;
+
 // ==========================================================================
 // Initialization & Routing
 // ==========================================================================
@@ -227,46 +230,11 @@ async function loadDashboardData() {
         document.getElementById('stat-categories').textContent = data.summary.totalCategories;
         document.getElementById('stat-tags').textContent = data.summary.totalTags;
 
-        // 2. Render Security Strengths
-        const total = data.summary.totalItems || 1; // Avoid divide-by-zero
-        const strongPct = Math.round((data.strengths.Strong || 0) / total * 100);
-        const mediumPct = Math.round((data.strengths.Medium || 0) / total * 100);
-        const weakPct = Math.round((data.strengths.Weak || 0) / total * 100);
+        // 2. Render Security Strengths Horizontal Bar Chart
+        renderSecurityChart(data.strengths);
 
-        document.getElementById('strength-strong-pct').textContent = `${strongPct}%`;
-        document.getElementById('strength-strong-bar').style.width = `${strongPct}%`;
-
-        document.getElementById('strength-medium-pct').textContent = `${mediumPct}%`;
-        document.getElementById('strength-medium-bar').style.width = `${mediumPct}%`;
-
-        document.getElementById('strength-weak-pct').textContent = `${weakPct}%`;
-        document.getElementById('strength-weak-bar').style.width = `${weakPct}%`;
-
-        // 3. Render Database Distribution (categories list)
-        const catListContainer = document.getElementById('dashboard-category-list');
-        catListContainer.innerHTML = '';
-        
-        if (data.categories.length === 0) {
-            catListContainer.innerHTML = '<div class="empty-state-small">No categories configured.</div>';
-        } else {
-            data.categories.forEach(cat => {
-                const pct = total > 0 ? Math.round(cat.count / total * 100) : 0;
-                
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'category-bar-item';
-                itemDiv.innerHTML = `
-                    <div class="category-bar-info">
-                        <span class="category-dot" style="background-color: ${cat.color}"></span>
-                        <span>${escapeHtml(cat.name)}</span>
-                    </div>
-                    <div class="category-track">
-                        <div class="category-fill" style="width: ${pct}%; background-color: ${cat.color}"></div>
-                    </div>
-                    <div class="category-bar-count">${cat.count} items</div>
-                `;
-                catListContainer.appendChild(itemDiv);
-            });
-        }
+        // 3. Render Database Distribution Doughnut Chart
+        renderCategoriesChart(data.categories);
 
         // 4. Load Pinned Favorites Credentials list
         loadDashboardFavoritesList();
@@ -275,6 +243,136 @@ async function loadDashboardData() {
         console.error(err);
         showToast('Error loading dashboard analytics.', 'error');
     }
+}
+
+function renderSecurityChart(strengths) {
+    const canvas = document.getElementById('chart-security-strength');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    if (securityChart) {
+        securityChart.destroy();
+    }
+    
+    const dataVals = [strengths.Strong || 0, strengths.Medium || 0, strengths.Weak || 0];
+
+    securityChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Strong', 'Medium', 'Weak'],
+            datasets: [{
+                data: dataVals,
+                backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                borderRadius: 6,
+                borderWidth: 0,
+                barThickness: 16
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f1423',
+                    titleColor: '#fff',
+                    bodyColor: '#94a3b8',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    titleFont: { family: 'Outfit' },
+                    bodyFont: { family: 'Outfit' }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.03)' },
+                    ticks: { color: '#64748b', font: { family: 'Outfit' }, stepSize: 1, beginAtZero: true }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { family: 'Outfit', weight: '500' } }
+                }
+            }
+        }
+    });
+}
+
+function renderCategoriesChart(categoriesData) {
+    const canvas = document.getElementById('chart-categories-distribution');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    if (categoriesChart) {
+        categoriesChart.destroy();
+    }
+
+    const filteredCats = categoriesData.filter(c => c.count > 0);
+    
+    if (filteredCats.length === 0) {
+        categoriesChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['No Data'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['rgba(255,255,255,0.03)']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+        return;
+    }
+
+    const labels = filteredCats.map(c => c.name);
+    const dataVals = filteredCats.map(c => c.count);
+    const colors = filteredCats.map(c => c.color || '#4f46e5');
+
+    categoriesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dataVals,
+                backgroundColor: colors,
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: 'Outfit', size: 11, weight: '500' },
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        padding: 10
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0f1423',
+                    titleColor: '#fff',
+                    bodyColor: '#94a3b8',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    titleFont: { family: 'Outfit' },
+                    bodyFont: { family: 'Outfit' }
+                }
+            }
+        }
+    });
 }
 
 async function loadDashboardFavoritesList() {
