@@ -163,14 +163,39 @@ function setupEventListeners() {
         icon.className = type === 'password' ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
     });
 
+    const genPanel = document.getElementById('password-generator-panel');
     document.getElementById('btn-modal-generate').addEventListener('click', () => {
-        const generated = generateStrongPassword(16);
+        const isHidden = genPanel.style.display === 'none';
+        genPanel.style.display = isHidden ? 'block' : 'none';
+    });
+
+    // Length range slider label update
+    const genLenInput = document.getElementById('gen-length');
+    const genLenLabel = document.getElementById('gen-len-label');
+    genLenInput.addEventListener('input', (e) => {
+        genLenLabel.textContent = e.target.value;
+    });
+
+    // Generate trigger
+    document.getElementById('btn-trigger-generate').addEventListener('click', () => {
+        const length = parseInt(genLenInput.value);
+        const upper = document.getElementById('gen-upper').checked;
+        const lower = document.getElementById('gen-lower').checked;
+        const digits = document.getElementById('gen-digits').checked;
+        const symbols = document.getElementById('gen-symbols').checked;
+        
+        if (!upper && !lower && !digits && !symbols) {
+            showToast('Please select at least one character type!', 'warning');
+            return;
+        }
+
+        const generated = generateConfiguredPassword(length, upper, lower, digits, symbols);
         passInput.value = generated;
         passInput.setAttribute('type', 'text');
         const icon = document.querySelector('#btn-modal-toggle-secret i');
         icon.className = 'fa-solid fa-eye';
         updatePasswordStrengthMeter(generated);
-        showToast('Generated strong password key.', 'info');
+        showToast('Generated configured password.', 'info');
     });
 
     // 10. Category Form Submission
@@ -999,21 +1024,57 @@ function updatePasswordStrengthMeter(password) {
     const indicator = document.getElementById('modal-strength-indicator');
     const barFill = indicator.querySelector('.fill');
     const textSpan = indicator.querySelector('.text');
+    const suggestionsEl = document.getElementById('password-suggestions');
 
     if (!password) {
         barFill.style.width = '0';
         barFill.style.backgroundColor = 'transparent';
         textSpan.textContent = 'Strength: None';
+        if (suggestionsEl) {
+            suggestionsEl.style.display = 'none';
+            suggestionsEl.innerHTML = '';
+        }
         return;
     }
 
     let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 14) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
+    const tips = [];
+    
+    if (password.length >= 8) {
+        score++;
+    } else {
+        tips.push('Make password at least 8 characters.');
+    }
+    
+    if (password.length >= 14) {
+        score++;
+    } else if (password.length >= 8) {
+        tips.push('Length > 14 characters is ideal.');
+    }
+    
+    if (/[A-Z]/.test(password)) {
+        score++;
+    } else {
+        tips.push('Add uppercase letters (A-Z).');
+    }
+    
+    if (/[a-z]/.test(password)) {
+        score++;
+    } else {
+        tips.push('Add lowercase letters (a-z).');
+    }
+    
+    if (/[0-9]/.test(password)) {
+        score++;
+    } else {
+        tips.push('Add numbers (0-9).');
+    }
+    
+    if (/[^A-Za-z0-9]/.test(password)) {
+        score++;
+    } else {
+        tips.push('Add special symbols (e.g. !@#$).');
+    }
 
     let level = 'Weak';
     let width = '33%';
@@ -1033,6 +1094,18 @@ function updatePasswordStrengthMeter(password) {
     barFill.style.backgroundColor = color;
     textSpan.textContent = `Strength: ${level}`;
     textSpan.style.color = color;
+
+    if (suggestionsEl) {
+        if (level === 'Strong') {
+            suggestionsEl.innerHTML = '<span style="color: var(--success)"><i class="fa-solid fa-circle-check"></i> High entropy security key!</span>';
+            suggestionsEl.style.display = 'block';
+        } else if (tips.length > 0) {
+            suggestionsEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Suggestions: ${tips.slice(0, 2).join(' ')}`;
+            suggestionsEl.style.display = 'block';
+        } else {
+            suggestionsEl.style.display = 'none';
+        }
+    }
 }
 
 // Floating Toast Alert creation
@@ -1071,16 +1144,52 @@ function copyTextDirect(text) {
     });
 }
 
-// Random strong password generator
-function generateStrongPassword(length = 16) {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
+// Configurable password generator
+function generateConfiguredPassword(length, upper, lower, digits, symbols) {
+    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+    const digitChars = '0123456789';
+    const symbolChars = '!@#$%^&*()_+~`|}{[]:;?><,./-=';
+
+    let availableChars = '';
     let password = '';
-    const array = new Uint32Array(length);
-    window.crypto.getRandomValues(array);
-    for (let i = 0; i < length; i++) {
-        password += chars[array[i] % chars.length];
+    
+    // Ensure we get at least one of each selected type in the password
+    const guaranteed = [];
+    if (upper) {
+        availableChars += uppercaseChars;
+        guaranteed.push(uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)]);
     }
-    return password;
+    if (lower) {
+        availableChars += lowercaseChars;
+        guaranteed.push(lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)]);
+    }
+    if (digits) {
+        availableChars += digitChars;
+        guaranteed.push(digitChars[Math.floor(Math.random() * digitChars.length)]);
+    }
+    if (symbols) {
+        availableChars += symbolChars;
+        guaranteed.push(symbolChars[Math.floor(Math.random() * symbolChars.length)]);
+    }
+
+    const remainingLength = length - guaranteed.length;
+    const array = new Uint32Array(remainingLength);
+    window.crypto.getRandomValues(array);
+    
+    for (let i = 0; i < remainingLength; i++) {
+        password += availableChars[array[i] % availableChars.length];
+    }
+    
+    // Inject guaranteed characters at random positions
+    const fullPasswordArray = (password + guaranteed.join('')).split('');
+    // Shuffle
+    for (let i = fullPasswordArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [fullPasswordArray[i], fullPasswordArray[j]] = [fullPasswordArray[j], fullPasswordArray[i]];
+    }
+
+    return fullPasswordArray.join('');
 }
 
 // Format Relative Timestamp helper
