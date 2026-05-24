@@ -20,6 +20,7 @@ const state = {
 
 let securityChart = null;
 let categoriesChart = null;
+let currentQueryResult = null;
 
 // ==========================================================================
 // Initialization & Routing
@@ -33,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function initApp() {
     // Initialize Theme
     checkThemePreference();
+    
+    // Load SQL Console Query History
+    loadQueryHistory();
     
     // Check hash for initial tab
     const hash = window.location.hash.replace('#', '');
@@ -119,6 +123,10 @@ function setupEventListeners() {
         document.getElementById('sql-editor').value = '';
         document.getElementById('sql-editor').focus();
     });
+
+    // Exports
+    document.getElementById('btn-export-csv').addEventListener('click', exportResultsToCSV);
+    document.getElementById('btn-export-json').addEventListener('click', exportResultsToJSON);
 
     // SQL Explorer Table clicks helper
     document.querySelectorAll('.schema-table-header').forEach(header => {
@@ -916,11 +924,18 @@ async function executeConsoleQuery() {
     const statusEl = document.getElementById('console-status');
     const container = document.getElementById('results-container');
     const countEl = document.getElementById('results-count');
+    const btnCSV = document.getElementById('btn-export-csv');
+    const btnJSON = document.getElementById('btn-export-json');
 
     if (!queryStr) {
         showToast('Please type a SQL command first.', 'warning');
         return;
     }
+
+    // Reset State
+    currentQueryResult = null;
+    btnCSV.setAttribute('disabled', 'true');
+    btnJSON.setAttribute('disabled', 'true');
 
     statusEl.className = 'console-status-bar';
     statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running query against sqlite database...';
@@ -952,6 +967,9 @@ async function executeConsoleQuery() {
             return;
         }
 
+        // Save successfully run query to history list
+        saveQueryToHistory(queryStr);
+
         // Render Results Table
         statusEl.className = 'console-status-bar success';
         statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Query executed successfully. Action modified/returned <strong>${result.rowsCount}</strong> rows.`;
@@ -965,6 +983,11 @@ async function executeConsoleQuery() {
                 </div>`;
             return;
         }
+
+        // Cache results and enable export buttons
+        currentQueryResult = result.data;
+        btnCSV.removeAttribute('disabled');
+        btnJSON.removeAttribute('disabled');
 
         // Generate data table dynamically
         const columns = Object.keys(result.data[0]);
@@ -1252,4 +1275,134 @@ function checkThemePreference() {
     
     document.body.classList.toggle('light-theme', isLight);
     updateThemeUI(isLight);
+}
+
+// SQL Query History Management
+function saveQueryToHistory(sql) {
+    if (!sql || sql.trim() === '') return;
+    let history = [];
+    try {
+        const stored = localStorage.getItem('datavault_sql_history');
+        if (stored) history = JSON.parse(stored);
+    } catch (e) {
+        history = [];
+    }
+
+    // De-duplicate
+    history = history.filter(q => q.trim().toLowerCase() !== sql.trim().toLowerCase());
+    // Add to front
+    history.unshift(sql.trim());
+    // Cap at 10 items
+    if (history.length > 10) history = history.slice(0, 10);
+
+    localStorage.setItem('datavault_sql_history', JSON.stringify(history));
+    renderQueryHistory();
+}
+
+function loadQueryHistory() {
+    renderQueryHistory();
+}
+
+function renderQueryHistory() {
+    const listEl = document.getElementById('query-history-list');
+    if (!listEl) return;
+
+    let history = [];
+    try {
+        const stored = localStorage.getItem('datavault_sql_history');
+        if (stored) history = JSON.parse(stored);
+    } catch (e) {
+        history = [];
+    }
+
+    if (history.length === 0) {
+        listEl.innerHTML = '<div class="empty-state-small" style="font-size: 0.8rem; padding: 10px;">No query history.</div>';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    history.forEach(queryStr => {
+        const item = document.createElement('button');
+        item.className = 'btn btn-secondary';
+        item.style.textAlign = 'left';
+        item.style.padding = '8px 12px';
+        item.style.fontSize = '0.78rem';
+        item.style.fontFamily = 'JetBrains Mono, monospace';
+        item.style.whiteSpace = 'nowrap';
+        item.style.overflow = 'hidden';
+        item.style.textOverflow = 'ellipsis';
+        item.style.width = '100%';
+        item.style.border = '1px solid var(--border-color)';
+        item.title = queryStr;
+        
+        item.textContent = queryStr;
+        item.addEventListener('click', () => {
+            const editor = document.getElementById('sql-editor');
+            editor.value = queryStr;
+            editor.focus();
+            executeConsoleQuery();
+        });
+        listEl.appendChild(item);
+    });
+}
+
+// Exports Results formatting utilities
+function exportResultsToCSV() {
+    if (!currentQueryResult || currentQueryResult.length === 0) {
+        showToast('No query data to export.', 'warning');
+        return;
+    }
+
+    try {
+        const headers = Object.keys(currentQueryResult[0]);
+        const csvRows = [headers.join(',')];
+
+        currentQueryResult.forEach(row => {
+            const values = headers.map(header => {
+                const val = row[header];
+                const escaped = ('' + (val === null ? 'NULL' : val)).replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `datavault_query_export_${Date.now()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('CSV exported successfully.', 'success');
+    } catch (e) {
+        showToast('CSV export failed.', 'error');
+    }
+}
+
+function exportResultsToJSON() {
+    if (!currentQueryResult || currentQueryResult.length === 0) {
+        showToast('No query data to export.', 'warning');
+        return;
+    }
+
+    try {
+        const jsonString = JSON.stringify(currentQueryResult, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `datavault_query_export_${Date.now()}.json`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('JSON exported successfully.', 'success');
+    } catch (e) {
+        showToast('JSON export failed.', 'error');
+    }
 }

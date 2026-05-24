@@ -262,7 +262,15 @@ ORDER BY items.title ASC;</textarea>
                         <div class="glass-card results-card">
                             <div class="card-header">
                                 <h2>Query Execution Result</h2>
-                                <span class="badge" id="results-count">0 rows</span>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="btn btn-secondary" id="btn-export-csv" style="padding: 4px 8px; font-size: 0.75rem;" disabled>
+                                        <i class="fa-solid fa-file-csv"></i> Export CSV
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-export-json" style="padding: 4px 8px; font-size: 0.75rem;" disabled>
+                                        <i class="fa-solid fa-file-code"></i> Export JSON
+                                    </button>
+                                    <span class="badge" id="results-count">0 rows</span>
+                                </div>
                             </div>
                             <div class="results-table-container" id="results-container">
                                 <div class="empty-table-state">
@@ -335,6 +343,17 @@ ORDER BY items.title ASC;</textarea>
                                         <li><span>tag_id</span> <span class="type">INTEGER PK, FK</span></li>
                                     </ul>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Query History Card -->
+                        <div class="glass-card history-card" style="margin-top: 16px; max-height: 250px; display: flex; flex-direction: column; padding: 20px;">
+                            <div class="card-header" style="margin-bottom: 12px;">
+                                <h2 style="font-size: 1.05rem;">Query History</h2>
+                                <i class="fa-solid fa-clock-rotate-left text-muted"></i>
+                            </div>
+                            <div id="query-history-list" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                                <div class="empty-state-small" style="font-size: 0.8rem; padding: 10px;">No query history.</div>
                             </div>
                         </div>
                     </aside>
