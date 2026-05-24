@@ -2,7 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'datavault.db');
+const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
+const DB_PATH = isVercel ? path.join('/tmp', 'datavault.db') : path.join(__dirname, 'datavault.db');
 const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
 // Establish Database Connection
