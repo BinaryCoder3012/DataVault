@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataVault - Secure Relational DBMS Management</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2>DataVault</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-link active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#vault" class="nav-link" data-tab="vault">
+                    <i class="fa-solid fa-vault"></i>
+                    <span>Vault Items</span>
+                </a>
+                <a href="#categories" class="nav-link" data-tab="categories">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="#console" class="nav-link" data-tab="console">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>SQL Console</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="db-status">
+                    <span class="status-indicator online"></span>
+                    <span>SQLite Connected</span>
+                </div>
+                <div class="db-badge">v1.0.0</div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="page-title">
+                    <h1 id="current-view-title">Dashboard</h1>
+                    <p id="current-view-desc">Security insights and database metrics at a glance.</p>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" id="btn-sync-db">
+                        <i class="fa-solid fa-rotate"></i> Sync Data
+                    </button>
+                    <button class="btn btn-primary" id="btn-global-add">
+                        <i class="fa-solid fa-plus"></i> New Item
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="tab-view active">
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon info">
+                            <i class="fa-solid fa-shield-heart"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <h3>Total Items</h3>
+                            <p class="kpi-value" id="stat-total-items">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon warning">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <h3>Favorites</h3>
+                            <p class="kpi-value" id="stat-favorites">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon success">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <h3>Categories</h3>
+                            <p class="kpi-value" id="stat-categories">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon danger">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                        <div class="kpi-details">
+                            <h3>Active Tags</h3>
+                            <p class="kpi-value" id="stat-tags">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphs / Analytical Section -->
+                <div class="dashboard-grid">
+                    <!-- Security Strength Card -->
+                    <div class="glass-card security-strength-card">
+                        <div class="card-header">
+                            <h2>Security Audit</h2>
+                            <i class="fa-solid fa-circle-exclamation text-muted"></i>
+                        </div>
+                        <div class="security-chart-container">
+                            <div class="security-bars">
+                                <div class="strength-metric">
+                                    <div class="metric-label">
+                                        <span>Strong Secrets</span>
+                                        <span id="strength-strong-pct">0%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill strong" id="strength-strong-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-metric">
+                                    <div class="metric-label">
+                                        <span>Medium Secrets</span>
+                                        <span id="strength-medium-pct">0%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill medium" id="strength-medium-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-metric">
+                                    <div class="metric-label">
+                                        <span>Weak Secrets</span>
+                                        <span id="strength-weak-pct">0%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill weak" id="strength-weak-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="security-footer">
+                            <p class="text-sm"><i class="fa-solid fa-circle-info"></i> Strengths are evaluated dynamically on the server based on length and entropy checks.</p>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown Card -->
+                    <div class="glass-card category-breakdown-card">
+                        <div class="card-header">
+                            <h2>Database Distribution</h2>
+                            <i class="fa-solid fa-chart-simple text-muted"></i>
+                        </div>
+                        <div class="category-list" id="dashboard-category-list">
+                            <!-- Populated Dynamically -->
+                            <div class="empty-state">No category distribution data.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent items grid -->
+                <div class="glass-card recent-items-card">
+                    <div class="card-header">
+                        <h2>Pinned & Favorite Credentials</h2>
+                        <a href="#vault" class="view-all-link">Manage Vault <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="recent-list-container">
+                        <div class="recent-header-row">
+                            <div>Title</div>
+                            <div>Category</div>
+                            <div>Username</div>
+                            <div>Action</div>
+                        </div>
+                        <div class="recent-items-list" id="dashboard-favorites-list">
+                            <!-- Populated Dynamically -->
+                            <div class="empty-state-small">No pinned/favorite credentials.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Vault View -->
+            <section id="view-vault" class="tab-view">
+                <!-- Filters Bar -->
+                <div class="filter-bar">
+                    <div class="search-input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="vault-search" placeholder="Search title, username, category, or tag...">
+                    </div>
+                    <div class="select-wrapper">
+                        <select id="vault-filter-category">
+                            <option value="">All Categories</option>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="select-wrapper">
+                        <select id="vault-filter-tag">
+                            <option value="">All Tags</option>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                    <button class="btn btn-icon" id="vault-filter-fav" title="Show Favorites Only">
+                        <i class="fa-solid fa-star"></i>
+                    </button>
+                    <button class="btn btn-icon" id="btn-clear-filters" title="Reset Filters">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Items Grid -->
+                <div class="items-grid" id="vault-items-grid">
+                    <!-- Populated dynamically -->
+                    <div class="empty-state">
+                        <i class="fa-solid fa-cube"></i>
+                        <h3>Your Vault is empty</h3>
+                        <p>Create your first secure record inside DataVault.</p>
+                        <button class="btn btn-primary btn-add-item-empty">Add Item</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Categories View -->
+            <section id="view-categories" class="tab-view">
+                <div class="categories-action-header">
+                    <p class="description">Organize secure data inside relational scopes. Items in deleted categories remain safe but unassigned.</p>
+                    <button class="btn btn-primary" id="btn-create-category">
+                        <i class="fa-solid fa-plus"></i> New Category
+                    </button>
+                </div>
+                <div class="categories-grid" id="categories-grid">
+                    <!-- Populated Dynamically -->
+                </div>
+            </section>
+
+            <!-- SQL Console View -->
+            <section id="view-console" class="tab-view">
+                <div class="console-layout">
+                    <!-- Editor & Table Pane -->
+                    <div class="console-main">
+                        <div class="glass-card editor-card">
+                            <div class="card-header">
+                                <div class="console-title">
+                                    <i class="fa-solid fa-keyboard"></i>
+                                    <span>SQL Query Command Terminal</span>
+                                </div>
+                                <div class="console-mode-toggle">
+                                    <label class="switch">
+                                        <input type="checkbox" id="console-unsafe-mode">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="unsafe-label">Admin Write Mode</span>
+                                </div>
+                            </div>
+                            <div class="editor-container">
+                                <textarea id="sql-editor" spellcheck="false">SELECT items.title, items.username, categories.name AS category, items.is_favorite 
+FROM items 
+LEFT JOIN categories ON items.category_id = categories.id
+ORDER BY items.title ASC;</textarea>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="btn btn-secondary" id="btn-console-clear">Clear</button>
+                                <button class="btn btn-primary" id="btn-console-run">
+                                    <i class="fa-solid fa-play"></i> Run Query
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Console Status & Alert -->
+                        <div class="console-status-bar" id="console-status">
+                            <span class="text-muted">Ready. Execute a query to view relational data.</span>
+                        </div>
+
+                        <!-- Results Card -->
+                        <div class="glass-card results-card">
+                            <div class="card-header">
+                                <h2>Query Execution Result</h2>
+                                <span class="badge" id="results-count">0 rows</span>
+                            </div>
+                            <div class="results-table-container" id="results-container">
+                                <div class="empty-table-state">
+                                    <i class="fa-solid fa-table-list"></i>
+                                    <p>Run a valid SQL statement to display the results table.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Schema Panel -->
+                    <aside class="console-schema">
+                        <div class="glass-card schema-card">
+                            <div class="card-header">
+                                <h2>Schema Explorer</h2>
+                                <i class="fa-solid fa-database text-muted"></i>
+                            </div>
+                            <div class="schema-explorer-content">
+                                <div class="schema-table">
+                                    <button class="schema-table-header" data-table="categories">
+                                        <i class="fa-solid fa-table"></i>
+                                        <span>categories</span>
+                                    </button>
+                                    <ul class="schema-columns">
+                                        <li><span>id</span> <span class="type">INTEGER PK</span></li>
+                                        <li><span>name</span> <span class="type">TEXT UNIQUE</span></li>
+                                        <li><span>icon</span> <span class="type">TEXT</span></li>
+                                        <li><span>color</span> <span class="type">TEXT</span></li>
+                                        <li><span>created_at</span> <span class="type">DATETIME</span></li>
+                                    </ul>
+                                </div>
+
+                                <div class="schema-table">
+                                    <button class="schema-table-header" data-table="items">
+                                        <i class="fa-solid fa-table"></i>
+                                        <span>items</span>
+                                    </button>
+                                    <ul class="schema-columns">
+                                        <li><span>id</span> <span class="type">INTEGER PK</span></li>
+                                        <li><span>category_id</span> <span class="type">INTEGER FK</span></li>
+                                        <li><span>title</span> <span class="type">TEXT</span></li>
+                                        <li><span>username</span> <span class="type">TEXT</span></li>
+                                        <li><span>secret_value</span> <span class="type">TEXT</span></li>
+                                        <li><span>url</span> <span class="type">TEXT</span></li>
+                                        <li><span>notes</span> <span class="type">TEXT</span></li>
+                                        <li><span>is_favorite</span> <span class="type">INTEGER</span></li>
+                                        <li><span>created_at</span> <span class="type">DATETIME</span></li>
+                                        <li><span>updated_at</span> <span class="type">DATETIME</span></li>
+                                    </ul>
+                                </div>
+
+                                <div class="schema-table">
+                                    <button class="schema-table-header" data-table="tags">
+                                        <i class="fa-solid fa-table"></i>
+                                        <span>tags</span>
+                                    </button>
+                                    <ul class="schema-columns">
+                                        <li><span>id</span> <span class="type">INTEGER PK</span></li>
+                                        <li><span>name</span> <span class="type">TEXT UNIQUE</span></li>
+                                    </ul>
+                                </div>
+
+                                <div class="schema-table">
+                                    <button class="schema-table-header" data-table="item_tags">
+                                        <i class="fa-solid fa-table"></i>
+                                        <span>item_tags</span>
+                                    </button>
+                                    <ul class="schema-columns">
+                                        <li><span>item_id</span> <span class="type">INTEGER PK, FK</span></li>
+                                        <li><span>tag_id</span> <span class="type">INTEGER PK, FK</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- MODALS SECTION -->
+    <!-- ---------------------------------------------------- -->
+
+    <!-- Add/Edit Item Modal -->
+    <div class="modal-overlay" id="modal-item">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="item-modal-title">Add Vault Item</h2>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-item">
+                <input type="hidden" id="item-id">
+                
+                <div class="form-group">
+                    <label for="item-title">Title *</label>
+                    <input type="text" id="item-title" required placeholder="e.g. My Primary AWS Server">
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="item-category">Category</label>
+                        <select id="item-category">
+                            <option value="">No Category</option>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-username">Username / Key</label>
+                        <input type="text" id="item-username" placeholder="e.g. admin_datavault">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="item-secret">Secret Value (Password/Token) *</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="item-secret" required placeholder="Enter password or token...">
+                        <button type="button" class="btn-toggle-secret" id="btn-modal-toggle-secret">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </button>
+                        <button type="button" class="btn-generate-password" id="btn-modal-generate" title="Generate Strong Password">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
+                    </div>
+                    <div class="strength-feedback" id="modal-strength-indicator">
+                        <div class="strength-meter-bar"><div class="fill"></div></div>
+                        <span class="text">Strength: None</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="item-url">URL</label>
+                    <input type="url" id="item-url" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="item-tags">Tags (Comma-separated)</label>
+                    <input type="text" id="item-tags" placeholder="e.g. production, aws, backend">
+                </div>
+
+                <div class="form-group">
+                    <label for="item-notes">Notes</label>
+                    <textarea id="item-notes" placeholder="Write additional security keys, recovery notes, etc..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div class="modal-overlay" id="modal-category">
+        <div class="modal small-modal">
+            <div class="modal-header">
+                <h2 id="category-modal-title">Create Category</h2>
+                <button class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-category">
+                <input type="hidden" id="category-id">
+                
+                <div class="form-group">
+                    <label for="category-name">Category Name *</label>
+                    <input type="text" id="category-name" required placeholder="e.g. Cloud Databases">
+                </div>
+
+                <div class="form-group">
+                    <label>Icon Identifier</label>
+                    <div class="icon-selector">
+                        <label class="icon-option"><input type="radio" name="category-icon" value="key" checked><i class="fa-solid fa-key"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="server"><i class="fa-solid fa-server"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="code"><i class="fa-solid fa-code"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="shield"><i class="fa-solid fa-shield-halved"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="database"><i class="fa-solid fa-database"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="cloud"><i class="fa-solid fa-cloud"></i></label>
+                        <label class="icon-option"><input type="radio" name="category-icon" value="user-lock"><i class="fa-solid fa-user-lock"></i></label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="category-color">Accent Color</label>
+                    <input type="color" id="category-color" value="#6366f1">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
