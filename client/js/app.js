@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
+    // Initialize Theme
+    checkThemePreference();
+    
     // Check hash for initial tab
     const hash = window.location.hash.replace('#', '');
     if (hash && ['dashboard', 'vault', 'categories', 'console'].includes(hash)) {
@@ -172,6 +175,12 @@ function setupEventListeners() {
 
     // 10. Category Form Submission
     document.getElementById('form-category').addEventListener('submit', handleCategorySubmit);
+
+    // 11. Theme Switcher Toggle Link
+    document.getElementById('btn-theme-toggle').addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+    });
 }
 
 // Swaps active views
@@ -1103,4 +1112,35 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Theme management helper functions
+function toggleTheme() {
+    const body = document.body;
+    const isLight = body.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    updateThemeUI(isLight);
+}
+
+function updateThemeUI(isLight) {
+    const icon = document.getElementById('theme-toggle-icon');
+    const text = document.getElementById('theme-toggle-text');
+    if (!icon || !text) return;
+    
+    if (isLight) {
+        icon.className = 'fa-solid fa-sun';
+        text.textContent = 'Light Theme';
+    } else {
+        icon.className = 'fa-solid fa-moon';
+        text.textContent = 'Dark Theme';
+    }
+}
+
+function checkThemePreference() {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const isLight = savedTheme === 'light' || (!savedTheme && systemPrefersLight);
+    
+    document.body.classList.toggle('light-theme', isLight);
+    updateThemeUI(isLight);
 }
