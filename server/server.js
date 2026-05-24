@@ -33,6 +33,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start listening
-app.listen(PORT, () => {
-    console.log(`[+] DataVault Server is online on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`[+] DataVault Server is online on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
+
